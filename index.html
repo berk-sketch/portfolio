@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berk Ozcan | Creative Senior</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Framer Motion -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js"></script>
+
+     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+
+         * {
+            box-sizing: border-box;
+        }
+
+         body {
+            font-family: 'Inter', sans-serif;
+            background-color: #080808;
+            margin: 0;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+         @media (max-width: 768px) {
+            body { cursor: auto; }
+            .custom-cursor { display: none !important; }
+        }
+
+         .animate-spin-slow {
+            animation: spin 8s linear infinite;
+        }
+
+         @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+         ::selection {
+            background-color: white;
+            color: black;
+        }
+
+         /* Opening animation styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #080808;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+         .loading-text {
+            font-size: clamp(3rem, 15vw, 12rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            line-height: 0.85;
+        }
+
+         .loading-line {
+            width: 0;
+            height: 2px;
+            background: white;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+     <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+         const motion = window.Motion ? window.Motion.motion : null;
+        const AnimatePresence = window.Motion ? window.Motion.AnimatePresence : null;
+        const useScroll = window.Motion ? window.Motion.useScroll : null;
+        const useTransform = window.Motion ? window.Motion.useTransform : null;
+        const lucideIcons = window.lucideReact || window.LucideReact;
+        const {
+            Mail, Instagram, ArrowUpRight, Play, X, Menu,
+            Globe, ArrowRight, MapPin, Linkedin
+        } = lucideIcons || {};
+
+         const PROJECTS = [
+            {
+                id: 1,
+                title: "NOCTURNAL",
+                category: "directing",
+                year: "2024",
+                client: "Nike",
+                image: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&q=80&w=1200",
+                description: "A study on late-night movement and urban isolation.",
+                fullDescription: "NOCTURNAL explores the relationship between movement and stillness in urban environments after dark. Shot entirely in downtown Los Angeles between 2-5 AM, this project captures Nike athletes navigating empty streets and architectural spaces.",
+                credits: { director: "Berk Ozcan", dp: "Sarah Chen", producer: "Marcus Williams" }
+            },
+            {
+                id: 2,
+                title: "SILENCE",
+                category: "photography",
+                year: "2023",
+                client: "Personal",
+                image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200",
+                description: "High-altitude analog photography exploring the scale of nature.",
+                fullDescription: "SILENCE is a meditation on scale and solitude. Shot on medium format film across the Swiss Alps and Norwegian fjords, this series examines humanity's place within vast natural landscapes.",
+                credits: { photographer: "Berk Ozcan", assistant: "Erik Lindqvist" }
+            },
+            {
+                id: 3,
+                title: "KINETIC",
+                category: "directing",
+                year: "2024",
+                client: "Beats",
+                image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1200",
+                description: "Visualizing sound through macro-cinematography.",
+                fullDescription: "KINETIC translates audio frequencies into visual form. Using specialized macro lenses and high-speed cameras, this campaign for Beats by Dre captures the physical manifestation of bass and rhythm.",
+                credits: { director: "Berk Ozcan", dp: "James Morton", sound: "Zara Ahmed" }
+            },
+            {
+                id: 4,
+                title: "VOID",
+                category: "photography",
+                year: "2023",
+                client: "Editorial",
+                image: "https://images.unsplash.com/photo-1502134249126-9f3755a50d78?auto=format&fit=crop&q=80&w=1200",
+                description: "Minimalist fashion photography focusing on silhouette.",
+                fullDescription: "VOID strips fashion photography to its essential elements: form, shadow, and gesture. This editorial series for Vogue Italia explores the boundary between presence and absence.",
+                credits: { photographer: "Berk Ozcan", stylist: "Isabella Romano", model: "Kai Jennings" }
+            },
+            {
+                id: 5,
+                title: "MERIDIAN",
+                category: "directing",
+                year: "2024",
+                client: "Porsche",
+                image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1200",
+                description: "A cinematic journey across the German autobahn at dawn.",
+                fullDescription: "MERIDIAN captures the essence of precision engineering through a dawn-to-dusk journey across Germany. Shot with custom gimbal rigs and drone cinematography for Porsche's Taycan campaign.",
+                credits: { director: "Berk Ozcan", dp: "Hans Weber", editor: "Lisa Park" }
+            },
+            {
+                id: 6,
+                title: "FLORA",
+                category: "photography",
+                year: "2024",
+                client: "Dior",
+                image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&q=80&w=1200",
+                description: "Botanical beauty through the lens of haute couture.",
+                fullDescription: "FLORA juxtaposes the delicate architecture of flowers with Dior's spring collection. Shot in the gardens of Château de Versailles, this series celebrates natural and crafted beauty.",
+                credits: { photographer: "Berk Ozcan", stylist: "Marie Dubois", florist: "Garden Stories Paris" }
+            }
+        ];
+
+         // Opening Animation Component
+        function OpeningAnimation({ onComplete }) {
+            const [lineWidth, setLineWidth] = useState(0);
+            const [textY, setTextY] = useState(0);
+            const [opacity, setOpacity] = useState(1);
+
+             useEffect(() => {
+                // Animate line
+                const lineTimer = setTimeout(() => {
+                    setLineWidth(100);
+                }, 100);
+
+                 // Slide text up and fade out
+                const textTimer = setTimeout(() => {
+                    setTextY(-100);
+                    setOpacity(0);
+                }, 1800);
+
+                 // Complete animation
+                const completeTimer = setTimeout(() => {
+                    onComplete();
+                }, 2500);
+
+                 return () => {
+                    clearTimeout(lineTimer);
+                    clearTimeout(textTimer);
+                    clearTimeout(completeTimer);
+                };
+            }, [onComplete]);
+
+             return (
+                <motion.div
+                    className="loading-screen"
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: opacity }}
+                    transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
+                >
+                    <motion.div
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: textY, opacity: textY === 0 ? 1 : 0 }}
+                        transition={{
+                            y: { duration: 0.8, ease: [0.76, 0, 0.24, 1] },
+                            opacity: { duration: 0.5 }
+                        }}
+                        className="text-white text-center"
+                    >
+                        <div className="loading-text">BERK</div>
+                        <div className="loading-text text-zinc-600">OZCAN</div>
+                    </motion.div>
+                    <motion.div
+                        className="loading-line"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${lineWidth}%` }}
+                        transition={{ duration: 1.5, ease: [0.76, 0, 0.24, 1] }}
+                        style={{ maxWidth: '300px' }}
+                    />
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: lineWidth > 50 ? 1 : 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="text-zinc-500 text-[10px] uppercase tracking-[0.5em] mt-8 font-bold"
+                    >
+                        Creative Senior
+                    </motion.p>
+                </motion.div>
+            );
+        }
+
+         // Navigation Menu Component
+        function NavigationMenu({ isOpen, onClose, mouseEnter, mouseLeave }) {
+            const menuItems = [
+                { label: 'Home', href: '/' },
+                { label: 'Directing', href: '/directing' },
+                { label: 'Photography', href: '/photography' },
+                { label: 'About', href: '/about' },
+                { label: 'Contact', href: '/contact' }
+            ];
+
+             return (
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div
+                            initial={{ clipPath: 'circle(0% at calc(100% - 60px) 60px)' }}
+                            animate={{ clipPath: 'circle(150% at calc(100% - 60px) 60px)' }}
+                            exit={{ clipPath: 'circle(0% at calc(100% - 60px) 60px)' }}
+                            transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+                            className="fixed inset-0 z-[150] bg-white"
+                        >
+                            <div className="h-full flex flex-col justify-center items-center">
+                                <nav className="text-center">
+                                    {menuItems.map((item, idx) => (
+                                        <motion.a
+                                            key={item.label}
+                                            href={item.href}
+                                            initial={{ opacity: 0, y: 40 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.1 + idx * 0.1, duration: 0.5 }}
+                                            onMouseEnter={mouseEnter}
+                                            onMouseLeave={mouseLeave}
+                                            className="block text-5xl md:text-8xl font-black uppercase tracking-tighter text-black hover:text-zinc-400 transition-colors py-2"
+                                        >
+                                            {item.label}
+                                        </motion.a>
+                                    ))}
+                                </nav>
+                            </div>
+                            <button
+                                onClick={onClose}
+                                onMouseEnter={mouseEnter}
+                                onMouseLeave={mouseLeave}
+                                className="absolute top-6 right-6 md:top-10 md:right-10 p-4 bg-black text-white rounded-full hover:rotate-90 transition-transform"
+                            >
+                                {X && <X size={20} />}
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            );
+        }
+
+         // Project Detail Page Component
+        function ProjectPage({ project, onClose, mouseEnter, mouseLeave }) {
+            return (
+                <motion.div
+                    initial={{ y: "100%" }}
+                    animate={{ y: 0 }}
+                    exit={{ y: "100%" }}
+                    transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+                    className="fixed inset-0 z-[200] bg-[#e5e5e5] text-black overflow-y-auto no-scrollbar"
+                >
+                    <div className="sticky top-0 z-50 p-6 md:p-10 flex justify-between items-center mix-blend-difference text-white">
+                        <span className="text-[10px] font-black uppercase tracking-[0.5em]">Project Archive</span>
+                        <button
+                            onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+                            onClick={onClose}
+                            className="p-4 bg-white text-black rounded-full hover:rotate-90 transition-transform"
+                        >
+                            {X && <X size={24} />}
+                        </button>
+                    </div>
+                    <div className="max-w-screen-2xl mx-auto px-6 pb-20">
+                        <motion.img
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.2 }}
+                            src={project.image}
+                            className="w-full rounded-3xl shadow-2xl mb-20 max-h-[85vh] object-cover"
+                            alt={project.title}
+                        />
+
+                         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-20">
+                            <div className="md:col-span-8">
+                                <motion.h3
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                    className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-10"
+                                >
+                                    {project.title}
+                                </motion.h3>
+                                <motion.p
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4 }}
+                                    className="text-2xl md:text-3xl font-light leading-relaxed text-zinc-700"
+                                >
+                                    {project.fullDescription || project.description}
+                                </motion.p>
+                            </div>
+
+                             <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                                className="md:col-span-4 space-y-8"
+                            >
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-400 mb-4 font-bold">Category</h5>
+                                    <p className="text-xl font-bold uppercase">{project.category}</p>
+                                </div>
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-400 mb-4 font-bold">Client</h5>
+                                    <p className="text-xl font-bold uppercase">{project.client}</p>
+                                </div>
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-400 mb-4 font-bold">Year</h5>
+                                    <p className="text-xl font-bold">{project.year}</p>
+                                </div>
+                                {project.credits && (
+                                    <div>
+                                        <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-400 mb-4 font-bold">Credits</h5>
+                                        <ul className="space-y-2">
+                                            {Object.entries(project.credits).map(([role, name]) => (
+                                                <li key={role} className="text-sm">
+                                                    <span className="text-zinc-400 uppercase">{role}:</span> {name}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </div>
+                    </div>
+                </motion.div>
+            );
+        }
+
+         function App() {
+            const [showOpening, setShowOpening] = useState(true);
+            const [selectedProject, setSelectedProject] = useState(null);
+            const [filter, setFilter] = useState('all');
+            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+            const [cursorVariant, setCursorVariant] = useState("default");
+            const [menuOpen, setMenuOpen] = useState(false);
+
+             const { scrollYProgress } = useScroll();
+            const textX = useTransform(scrollYProgress, [0, 1], [0, -600]);
+            const textXReverse = useTransform(scrollYProgress, [0, 1], [-600, 0]);
+
+             useEffect(() => {
+                const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+                window.addEventListener('mousemove', handleMouseMove);
+                return () => window.removeEventListener('mousemove', handleMouseMove);
+            }, []);
+
+             const variants = {
+                default: { height: 16, width: 16, x: mousePos.x - 8, y: mousePos.y - 8, backgroundColor: "white" },
+                hover: { height: 80, width: 80, x: mousePos.x - 40, y: mousePos.y - 40, backgroundColor: "white", mixBlendMode: "difference" }
+            };
+
+             const mouseEnter = () => setCursorVariant("hover");
+            const mouseLeave = () => setCursorVariant("default");
+
+             const filteredProjects = PROJECTS.filter(p => p.category === filter || filter === 'all');
+
+             const containerVars = {
+                hidden: { opacity: 0 },
+                show: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.1, delayChildren: 0.3 }
+                }
+            };
+
+             const itemVars = {
+                hidden: { opacity: 0, y: 30 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.215, 0.61, 0.355, 1] } }
+            };
+
+             if (showOpening) {
+                return <OpeningAnimation onComplete={() => setShowOpening(false)} />;
+            }
+
+             return (
+                <div className="bg-[#080808] text-[#e5e5e5] overflow-x-hidden selection:bg-white selection:text-black min-h-screen">
+                    {/* Film Grain */}
+                    <div className="fixed inset-0 pointer-events-none z-[99] opacity-[0.04] bg-[url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Grain.jpg')] bg-repeat"></div>
+
+                     {/* Custom Cursor */}
+                    <motion.div
+                        className="custom-cursor fixed top-0 left-0 rounded-full mix-blend-difference pointer-events-none z-[100] hidden md:flex items-center justify-center overflow-hidden"
+                        variants={variants}
+                        animate={cursorVariant}
+                        transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.5 }}
+                    >
+                        {cursorVariant === "hover" && (
+                            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] text-black font-black uppercase tracking-tighter">View</motion.span>
+                        )}
+                    </motion.div>
+
+                     {/* Navigation Menu */}
+                    <NavigationMenu
+                        isOpen={menuOpen}
+                        onClose={() => setMenuOpen(false)}
+                        mouseEnter={mouseEnter}
+                        mouseLeave={mouseLeave}
+                    />
+
+                     {/* Navigation */}
+                    <nav className="fixed top-0 w-full z-50 p-6 md:p-10 flex justify-between items-start pointer-events-none">
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="pointer-events-auto"
+                            onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+                        >
+                            <a href="/" className="block">
+                                <h1 className="text-2xl font-black tracking-tighter leading-none">BERK <br/> OZCAN.</h1>
+                                <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mt-2 font-bold">Creative Senior</p>
+                            </a>
+                        </motion.div>
+
+                         <div className="flex flex-col items-end space-y-6 pointer-events-auto">
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                                className="flex space-x-8 text-[10px] uppercase tracking-[0.2em] font-bold"
+                            >
+                                {['Archives', 'Directing', 'Stills'].map((item) => (
+                                    <button
+                                        key={item}
+                                        onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+                                        onClick={() => setFilter(item === 'Archives' ? 'all' : item === 'Stills' ? 'photography' : item.toLowerCase())}
+                                        className={`transition-colors ${ (filter === 'all' && item === 'Archives') || filter === item.toLowerCase() || (filter === 'photography' && item === 'Stills') ? 'text-white underline underline-offset-8' : 'text-zinc-600'}`}
+                                    >
+                                        {item}
+                                    </button>
+                                ))}
+                            </motion.div>
+                            <motion.button
+                                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                                onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+                                onClick={() => setMenuOpen(true)}
+                                className="bg-white/5 hover:bg-white text-white hover:text-black backdrop-blur-sm p-4 rounded-full transition-all duration-300 border border-white/10 group"
+                            >
+                                {Menu && <Menu size={20} className="group-hover:rotate-90 transition-transform" />}
+                            </motion.button>
+                        </div>
+                    </nav>
+
+                     {/* Hero Section */}
+                    <section className="relative h-screen flex flex-col justify-center items-center">
+                        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                            <motion.div style={{ x: textX }} className="text-[25vh] md:text-[45vh] font-black leading-none whitespace-nowrap opacity-[0.03] select-none mt-20">
+                                BERK OZCAN BERK OZCAN BERK OZCAN
+                            </motion.div>
+                        </div>
+
+                         <motion.div
+                            variants={containerVars}
+                            initial="hidden"
+                            animate="show"
+                            className="z-10 text-center px-4 max-w-7xl"
+                        >
+                            <motion.div variants={itemVars} className="flex items-center justify-center gap-3 mb-6">
+                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-zinc-400">Currently in Los Angeles</span>
+                            </motion.div>
+
+                             <motion.h2 variants={itemVars} className="text-7xl md:text-[11rem] font-black tracking-tighter leading-[0.8] uppercase">
+                                Visual <br /> <span className="italic font-light text-zinc-500">Narrative</span>
+                            </motion.h2>
+
+                             <motion.div variants={itemVars} className="mt-12 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 max-w-[200px] leading-relaxed font-bold">
+                                    Directing motion and capturing light across continents.
+                                </p>
+                                <button
+                                    onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+                                    className="group flex items-center gap-4 text-sm font-bold uppercase tracking-widest border-b border-white/20 pb-2 hover:border-white transition-all"
+                                >
+                                    Showreel '26 {ArrowRight && <ArrowRight size={16} className="-rotate-45 group-hover:rotate-0 transition-transform" />}
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    </section>
+
+                     {/* Projects Grid */}
+                    <section className="px-6 md:px-12 py-32 bg-[#e5e5e5] text-black rounded-t-[50px] md:rounded-t-[100px] relative z-10">
+                        <div className="flex flex-col md:flex-row justify-between items-baseline mb-24 gap-4">
+                            <motion.h3
+                                initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}
+                                className="text-6xl md:text-9xl font-black tracking-tighter uppercase leading-none"
+                            >
+                                Selected<br />Works
+                            </motion.h3>
+                            <div className="md:text-right">
+                                <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-black mb-2">Portfolio Volume</p>
+                                <p className="text-5xl font-light tracking-tighter italic">{filteredProjects.length.toString().padStart(2, '0')}/26</p>
+                            </div>
+                        </div>
+
+                         <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24">
+                            <AnimatePresence mode="popLayout">
+                                {filteredProjects.map((project, idx) => (
+                                    <motion.div
+                                        key={project.id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        whileInView={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        viewport={{ once: true, margin: "-50px" }}
+                                        onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+                                        onClick={() => setSelectedProject(project)}
+                                        className={`group relative cursor-pointer ${idx % 2 !== 0 ? 'md:mt-48' : ''}`}
+                                    >
+                                        <div className="overflow-hidden rounded-2xl bg-zinc-200 aspect-[4/5] relative">
+                                            <motion.img
+                                                whileHover={{ scale: 1.05 }}
+                                                transition={{ duration: 1.2 }}
+                                                src={project.image}
+                                                alt={project.title}
+                                                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000"
+                                            />
+                                        </div>
+                                        <div className="mt-8 flex justify-between items-end border-b border-black/10 pb-6">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">{project.category} / {project.client}</p>
+                                                <h4 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">{project.title}</h4>
+                                            </div>
+                                            <span className="text-sm font-light italic text-zinc-400">{project.year}</span>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
+                    </section>
+
+                     {/* About Section */}
+                    <section className="py-48 px-6 md:px-12 flex flex-col items-center text-center">
+                        <motion.div
+                            initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }}
+                            className="max-w-5xl"
+                        >
+                            <h2 className="text-4xl md:text-7xl font-bold tracking-tighter uppercase leading-tight italic mb-20">
+                                Berk Ozcan is a <span className="text-zinc-600">Creative Senior</span> bridging the gap between <span className="underline decoration-1 underline-offset-8">Amsterdam's design rigour</span> and <span className="underline decoration-1 underline-offset-8">LA's cinematic scale</span>.
+                            </h2>
+
+                             <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-left border-t border-white/10 pt-16">
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8 font-bold">Expertise</h5>
+                                    <ul className="space-y-3 text-sm font-bold uppercase tracking-widest">
+                                        <li>Creative Direction</li>
+                                        <li>Cinematography</li>
+                                        <li>Visual Strategy</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8 font-bold">Network</h5>
+                                    <ul className="space-y-3 text-sm font-bold uppercase">
+                                        {[
+                                            { name: 'Instagram', url: 'https://instagram.com' },
+                                            { name: 'Vimeo', url: 'https://vimeo.com' },
+                                            { name: 'LinkedIn', url: 'https://linkedin.com' }
+                                        ].map(link => (
+                                            <li key={link.name}>
+                                                <a
+                                                    href={link.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onMouseEnter={mouseEnter}
+                                                    onMouseLeave={mouseLeave}
+                                                    className="flex justify-between border-b border-white/5 pb-2 cursor-pointer group hover:text-white transition-colors"
+                                                >
+                                                    {link.name} {ArrowUpRight && <ArrowUpRight size={14} className="group-hover:translate-x-1 transition-transform" />}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8 font-bold">Contact</h5>
+                                    <a
+                                        href="mailto:hello@berkozcan.com"
+                                        onMouseEnter={mouseEnter}
+                                        onMouseLeave={mouseLeave}
+                                        className="text-3xl font-black hover:text-zinc-400 transition-colors cursor-pointer tracking-tighter uppercase leading-none break-words block"
+                                    >
+                                        hello@berkozcan.com
+                                    </a>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </section>
+
+                     <footer className="p-10 flex flex-col md:flex-row justify-between items-center border-t border-white/5 text-[9px] uppercase tracking-[0.6em] text-zinc-600 font-bold">
+                        <p>&copy; 2026 BERK OZCAN STUDIO / ALL RIGHTS RESERVED</p>
+                    </footer>
+
+                     <AnimatePresence>
+                        {selectedProject && (
+                            <ProjectPage
+                                project={selectedProject}
+                                onClose={() => setSelectedProject(null)}
+                                mouseEnter={mouseEnter}
+                                mouseLeave={mouseLeave}
+                            />
+                        )}
+                    </AnimatePresence>
+                </div>
+            );
+        }
+
+         const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

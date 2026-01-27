@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | Berk Ozcan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js"></script>
+
+     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+
+         * { box-sizing: border-box; }
+
+         body {
+            font-family: 'Inter', sans-serif;
+            background-color: #080808;
+            margin: 0;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+         @media (max-width: 768px) {
+            body { cursor: auto; }
+            .custom-cursor { display: none !important; }
+        }
+
+         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+         ::selection { background-color: white; color: black; }
+
+         input, textarea {
+            cursor: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+     <script type="text/babel">
+        const { useState, useEffect } = React;
+        const motion = window.Motion?.motion;
+        const { ArrowUpRight, ArrowLeft, MapPin, Mail, Phone, Send } = window.lucideReact || window.LucideReact || {};
+
+         const SOCIAL_LINKS = [
+            { name: 'Instagram', url: 'https://instagram.com', handle: '@berkozcan' },
+            { name: 'Vimeo', url: 'https://vimeo.com', handle: 'berkozcan' },
+            { name: 'LinkedIn', url: 'https://linkedin.com', handle: 'berkozcan' }
+        ];
+
+         function App() {
+            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+            const [cursorVariant, setCursorVariant] = useState("default");
+            const [formState, setFormState] = useState({ name: '', email: '', project: '', message: '' });
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [submitted, setSubmitted] = useState(false);
+
+             useEffect(() => {
+                const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+                window.addEventListener('mousemove', handleMouseMove);
+                return () => window.removeEventListener('mousemove', handleMouseMove);
+            }, []);
+
+             const variants = {
+                default: { height: 16, width: 16, x: mousePos.x - 8, y: mousePos.y - 8, backgroundColor: "white" },
+                hover: { height: 80, width: 80, x: mousePos.x - 40, y: mousePos.y - 40, backgroundColor: "white", mixBlendMode: "difference" }
+            };
+
+             const mouseEnter = () => setCursorVariant("hover");
+            const mouseLeave = () => setCursorVariant("default");
+
+             const handleSubmit = (e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
+                setTimeout(() => {
+                    setIsSubmitting(false);
+                    setSubmitted(true);
+                    setFormState({ name: '', email: '', project: '', message: '' });
+                }, 1500);
+            };
+
+             const handleChange = (e) => {
+                setFormState({ ...formState, [e.target.name]: e.target.value });
+            };
+
+             return (
+                <div className="bg-[#080808] text-[#e5e5e5] min-h-screen">
+                    {/* Film Grain */}
+                    <div className="fixed inset-0 pointer-events-none z-[99] opacity-[0.04] bg-[url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Grain.jpg')] bg-repeat"></div>
+
+                     {/* Custom Cursor */}
+                    <motion.div
+                        className="custom-cursor fixed top-0 left-0 rounded-full mix-blend-difference pointer-events-none z-[100] hidden md:flex items-center justify-center"
+                        variants={variants}
+                        animate={cursorVariant}
+                        transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.5 }}
+                    />
+
+                     {/* Navigation */}
+                    <nav className="fixed top-0 w-full z-50 p-6 md:p-10 flex justify-between items-start pointer-events-none">
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="pointer-events-auto"
+                        >
+                            <a href="/" onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} className="block">
+                                <h1 className="text-2xl font-black tracking-tighter leading-none">BERK <br/> OZCAN.</h1>
+                                <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mt-2 font-bold">Creative Senior</p>
+                            </a>
+                        </motion.div>
+
+                         <motion.a
+                            href="/"
+                            initial={{ scale: 0 }} animate={{ scale: 1 }}
+                            onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+                            className="pointer-events-auto bg-white/5 hover:bg-white text-white hover:text-black backdrop-blur-sm p-4 rounded-full transition-all duration-300 border border-white/10 group"
+                        >
+                            {ArrowLeft && <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />}
+                        </motion.a>
+                    </nav>
+
+                     {/* Main Content */}
+                    <section className="pt-40 pb-20 px-6 md:px-12 min-h-screen">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+                                {/* Left Column - Info */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 50 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.8 }}
+                                >
+                                    <p className="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-6 font-bold">Get in Touch</p>
+                                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.85] mb-12">
+                                        Let's<br />Talk
+                                    </h1>
+
+                                     <div className="space-y-12">
+                                        {/* Email */}
+                                        <div>
+                                            <h3 className="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-4 font-bold">Email</h3>
+                                            <a
+                                                href="mailto:hello@berkozcan.com"
+                                                onMouseEnter={mouseEnter}
+                                                onMouseLeave={mouseLeave}
+                                                className="text-3xl md:text-4xl font-black tracking-tighter uppercase hover:text-zinc-400 transition-colors flex items-center gap-4"
+                                            >
+                                                hello@berkozcan.com
+                                                {Mail && <Mail size={24} className="text-zinc-600" />}
+                                            </a>
+                                        </div>
+
+                                         {/* Location */}
+                                        <div>
+                                            <h3 className="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-4 font-bold">Location</h3>
+                                            <div className="flex items-center gap-3">
+                                                {MapPin && <MapPin size={20} className="text-zinc-600" />}
+                                                <span className="text-xl">Los Angeles, California</span>
+                                            </div>
+                                            <p className="text-zinc-500 mt-2 text-sm">Available for projects worldwide</p>
+                                        </div>
+
+                                         {/* Social */}
+                                        <div>
+                                            <h3 className="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-6 font-bold">Social</h3>
+                                            <div className="space-y-4">
+                                                {SOCIAL_LINKS.map((link) => (
+                                                    <a
+                                                        key={link.name}
+                                                        href={link.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onMouseEnter={mouseEnter}
+                                                        onMouseLeave={mouseLeave}
+                                                        className="flex items-center justify-between border-b border-white/10 pb-4 group hover:border-white/30 transition-colors"
+                                                    >
+                                                        <span className="font-bold uppercase tracking-wider">{link.name}</span>
+                                                        <div className="flex items-center gap-4 text-zinc-500 group-hover:text-white transition-colors">
+                                                            <span className="text-sm">{link.handle}</span>
+                                                            {ArrowUpRight && <ArrowUpRight size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
+                                                        </div>
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                 {/* Right Column - Form */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 50 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2, duration: 0.8 }}
+                                    className="bg-zinc-900/50 rounded-3xl p-8 md:p-12 border border-white/5"
+                                >
+                                    {submitted ? (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="h-full flex flex-col items-center justify-center text-center py-20"
+                                        >
+                                            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mb-8">
+                                                <motion.svg
+                                                    initial={{ pathLength: 0 }}
+                                                    animate={{ pathLength: 1 }}
+                                                    transition={{ duration: 0.5 }}
+                                                    className="w-10 h-10 text-green-500"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                    strokeWidth={3}
+                                                >
+                                                    <motion.path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                </motion.svg>
+                                            </div>
+                                            <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Message Sent</h3>
+                                            <p className="text-zinc-500">Thank you for reaching out. I'll get back to you soon.</p>
+                                            <button
+                                                onClick={() => setSubmitted(false)}
+                                                className="mt-8 text-sm uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"
+                                            >
+                                                Send Another
+                                            </button>
+                                        </motion.div>
+                                    ) : (
+                                        <>
+                                            <h2 className="text-2xl font-black uppercase tracking-tighter mb-8">Send a Message</h2>
+                                            <form onSubmit={handleSubmit} className="space-y-6">
+                                                <div>
+                                                    <label className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold block mb-3">Name</label>
+                                                    <input
+                                                        type="text"
+                                                        name="name"
+                                                        value={formState.name}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="w-full bg-transparent border-b border-white/20 py-4 text-lg focus:outline-none focus:border-white transition-colors placeholder:text-zinc-700"
+                                                        placeholder="Your name"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold block mb-3">Email</label>
+                                                    <input
+                                                        type="email"
+                                                        name="email"
+                                                        value={formState.email}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="w-full bg-transparent border-b border-white/20 py-4 text-lg focus:outline-none focus:border-white transition-colors placeholder:text-zinc-700"
+                                                        placeholder="your@email.com"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold block mb-3">Project Type</label>
+                                                    <select
+                                                        name="project"
+                                                        value={formState.project}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="w-full bg-transparent border-b border-white/20 py-4 text-lg focus:outline-none focus:border-white transition-colors text-zinc-400 cursor-pointer"
+                                                    >
+                                                        <option value="" className="bg-zinc-900">Select project type</option>
+                                                        <option value="directing" className="bg-zinc-900">Directing / Commercial</option>
+                                                        <option value="photography" className="bg-zinc-900">Photography</option>
+                                                        <option value="creative-direction" className="bg-zinc-900">Creative Direction</option>
+                                                        <option value="collaboration" className="bg-zinc-900">Collaboration</option>
+                                                        <option value="other" className="bg-zinc-900">Other</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold block mb-3">Message</label>
+                                                    <textarea
+                                                        name="message"
+                                                        value={formState.message}
+                                                        onChange={handleChange}
+                                                        required
+                                                        rows={4}
+                                                        className="w-full bg-transparent border-b border-white/20 py-4 text-lg focus:outline-none focus:border-white transition-colors placeholder:text-zinc-700 resize-none"
+                                                        placeholder="Tell me about your project..."
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    disabled={isSubmitting}
+                                                    onMouseEnter={mouseEnter}
+                                                    onMouseLeave={mouseLeave}
+                                                    className="w-full mt-8 py-5 bg-white text-black font-bold uppercase tracking-widest rounded-full hover:bg-zinc-200 transition-colors flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {isSubmitting ? (
+                                                        <span>Sending...</span>
+                                                    ) : (
+                                                        <>
+                                                            Send Message
+                                                            {Send && <Send size={18} />}
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </form>
+                                        </>
+                                    )}
+                                </motion.div>
+                            </div>
+                        </div>
+                    </section>
+
+                     {/* Footer */}
+                    <footer className="p-10 flex flex-col md:flex-row justify-between items-center border-t border-white/5 text-[9px] uppercase tracking-[0.6em] text-zinc-600 font-bold">
+                        <p>&copy; 2026 BERK OZCAN STUDIO</p>
+                        <p>All Rights Reserved</p>
+                    </footer>
+                </div>
+            );
+        }
+
+         const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
