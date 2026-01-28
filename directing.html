@@ -268,6 +268,71 @@
                         )}
                     </AnimatePresence>
                 </div>
+                function NavigationMenu({ isOpen, onClose, mouseEnter, mouseLeave }) {
+    const menuItems = [
+        { label: 'Home', href: 'index.html' },
+        { label: 'Directing', href: 'directing.html' },
+        { label: 'Photography', href: 'photography.html' },
+        { label: 'About', href: 'about.html' },
+        { label: 'Contact', href: 'contact.html' }
+    ];
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    initial={{ clipPath: 'circle(0% at calc(100% - 60px) 60px)' }}
+                    animate={{ clipPath: 'circle(150% at calc(100% - 60px) 60px)' }}
+                    exit={{ clipPath: 'circle(0% at calc(100% - 60px) 60px)' }}
+                    transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+                    className="fixed inset-0 z-[250] bg-white"
+                >
+                    <div className="h-full flex flex-col justify-center items-center">
+                        <nav className="text-center">
+                            {menuItems.map((item, idx) => (
+                                <motion.a
+                                    key={item.label}
+                                    href={item.href}
+                                    initial={{ opacity: 0, y: 40 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.1 + idx * 0.1 }}
+                                    onMouseEnter={mouseEnter}
+                                    onMouseLeave={mouseLeave}
+                                    className="block text-5xl md:text-8xl font-black uppercase tracking-tighter text-black hover:text-zinc-400 transition-colors py-2"
+                                >
+                                    {item.label}
+                                </motion.a>
+                            ))}
+                        </nav>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        onMouseEnter={mouseEnter}
+                        onMouseLeave={mouseLeave}
+                        className="absolute top-10 right-10 p-4 bg-black text-white rounded-full z-[300]"
+                    >
+                        <X size={24} />
+                    </button>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+}<nav className="fixed top-0 w-full z-50 p-6 md:p-10 flex justify-between items-start pointer-events-none">
+    <div className="pointer-events-auto" onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
+        <a href="index.html" className="block">
+            <h1 className="text-2xl font-black tracking-tighter leading-none text-white">BERK <br/> OZCAN.</h1>
+        </a>
+    </div>
+    <div className="pointer-events-auto">
+        <button
+            onClick={() => setMenuOpen(true)}
+            onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+            className="bg-white/5 hover:bg-white text-white hover:text-black p-4 rounded-full transition-all border border-white/10"
+        >
+            <Menu size={20} />
+        </button>
+    </div>
+</nav>
             );
         }
 
