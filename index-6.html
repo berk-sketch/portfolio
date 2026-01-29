@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berk Ozcan | Creative Senior</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Framer Motion -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #080808;
+            margin: 0;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        @media (max-width: 768px) {
+            body { cursor: auto; }
+            .custom-cursor { display: none !important; }
+        }
+
+        .animate-spin-slow {
+            animation: spin 8s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        ::selection {
+            background-color: white;
+            color: black;
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Loading animation styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #080808;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .loading-text {
+            font-size: clamp(3rem, 15vw, 12rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            line-height: 0.85;
+        }
+
+        .loading-line {
+            width: 0;
+            height: 2px;
+            background: white;
+            margin-top: 2rem;
+        }
+
+        input, textarea, select {
+            cursor: auto;
+        }
+
+        /* 3D Canvas */
+        #canvas-3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas-3d"></canvas>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Check if all libraries loaded
+        console.log('React:', typeof React);
+        console.log('ReactDOM:', typeof ReactDOM);
+        console.log('Motion:', typeof window.Motion);
+        console.log('THREE:', typeof THREE);
+        console.log('LucideReact:', typeof window.lucideReact || typeof window.LucideReact);
+
+        const { useState, useEffect, useRef } = React;
+        const motion = window.Motion ? window.Motion.motion : null;
+        const AnimatePresence = window.Motion ? window.Motion.AnimatePresence : null;
+        
+        // If Motion didn't load, create simple fallbacks
+        if (!motion) {
+            console.warn('Framer Motion did not load, using fallbacks');
+            window.motion = {
+                div: 'div',
+                button: 'button',
+                h1: 'h1',
+                h2: 'h2',
+                h3: 'h3',
+                p: 'p',
+                img: 'img',
+                span: 'span',
+                a: 'a',
+                svg: 'svg',
+                path: 'path'
+            };
+            window.AnimatePresence = ({ children }) => children;
+        }
+        
+        const lucideIcons = window.lucideReact || window.LucideReact;
+        const {
+            Mail, Instagram, ArrowUpRight, Play, X, Menu,
+            Globe, ArrowRight, MapPin, Linkedin, Maximize2, Send
+        } = lucideIcons || {};
+
+        const ALL_PROJECTS = [
+            {
+                id: 1,
+                title: "NOCTURNAL",
+                category: "directing",
+                year: "2024",
+                client: "Nike",
+                image: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&q=80&w=1200",
+                description: "A study on late-night movement and urban isolation.",
+                fullDescription: "NOCTURNAL explores the relationship between movement and stillness in urban environments after dark. Shot entirely in downtown Los Angeles between 2-5 AM, this project captures Nike athletes navigating empty streets and architectural spaces.",
+                credits: { director: "Berk Ozcan", dp: "Sarah Chen", producer: "Marcus Williams" },
+                video: true
+            },
+            {
+                id: 2,
+                title: "SILENCE",
+                category: "photography",
+                year: "2023",
+                client: "Personal",
+                image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200",
+                description: "High-altitude analog photography exploring the scale of nature.",
+                fullDescription: "SILENCE is a meditation on scale and solitude. Shot on medium format film across the Swiss Alps and Norwegian fjords, this series examines humanity's place within vast natural landscapes.",
+                credits: { photographer: "Berk Ozcan", assistant: "Erik Lindqvist" },
+                format: "Medium Format Film"
+            },
+            {
+                id: 3,
+                title: "KINETIC",
+                category: "directing",
+                year: "2024",
+                client: "Beats",
+                image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1200",
+                description: "Visualizing sound through macro-cinematography.",
+                fullDescription: "KINETIC translates audio frequencies into visual form. Using specialized macro lenses and high-speed cameras, this campaign for Beats by Dre captures the physical manifestation of bass and rhythm.",
+                credits: { director: "Berk Ozcan", dp: "James Morton", sound: "Zara Ahmed" },
+                video: true
+            },
+            {
+                id: 4,
+                title: "VOID",
+                category: "photography",
+                year: "2023",
+                client: "Editorial",
+                image: "https://images.unsplash.com/photo-1502134249126-9f3755a50d78?auto=format&fit=crop&q=80&w=1200",
+                description: "Minimalist fashion photography focusing on silhouette.",
+                fullDescription: "VOID strips fashion photography to its essential elements: form, shadow, and gesture. This editorial series for Vogue Italia explores the boundary between presence and absence.",
+                credits: { photographer: "Berk Ozcan", stylist: "Marie Claire" },
+                format: "Digital"
+            },
+            {
+                id: 5,
+                title: "MERIDIAN",
+                category: "directing",
+                year: "2024",
+                client: "Porsche",
+                image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1200",
+                description: "A cinematic journey across the German autobahn at dawn.",
+                fullDescription: "MERIDIAN captures the essence of precision engineering through a dawn-to-dusk journey across Germany. Shot with custom gimbal rigs and drone cinematography for Porsche's Taycan campaign.",
+                credits: { director: "Berk Ozcan", dp: "Klaus Weber" },
+                video: true
+            },
+            {
+                id: 6,
+                title: "FLORA",
+                category: "photography",
+                year: "2024",
+                client: "Dior",
+                image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&q=80&w=1200",
+                description: "Botanical beauty through the lens of haute couture.",
+                fullDescription: "FLORA juxtaposes the delicate architecture of flowers with Dior's spring collection. Shot in the gardens of Château de Versailles, this series celebrates natural and crafted beauty.",
+                credits: { photographer: "Berk Ozcan", stylist: "Isabelle Fontaine" },
+                format: "Large Format"
+            },
+            {
+                id: 7,
+                title: "EPHEMERAL",
+                category: "directing",
+                year: "2023",
+                client: "Balenciaga",
+                image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=1200",
+                description: "Fashion film exploring transience and transformation.",
+                fullDescription: "EPHEMERAL deconstructs the fashion show format into an intimate film experience. Shot in a single continuous take through Paris's abandoned metro tunnels.",
+                credits: { director: "Berk Ozcan", choreographer: "Ana Silva" },
+                video: true
+            },
+            {
+                id: 8,
+                title: "MONOLITH",
+                category: "photography",
+                year: "2023",
+                client: "Architectural Digest",
+                image: "https://images.unsplash.com/photo-1486718448742-163732cd1544?auto=format&fit=crop&q=80&w=1200",
+                description: "Brutalist architecture through minimalist lens.",
+                fullDescription: "MONOLITH documents post-war brutalist structures across Eastern Europe. Each image isolates form and texture, revealing the sculptural beauty within concrete masses.",
+                credits: { photographer: "Berk Ozcan" },
+                format: "Digital"
+            },
+            {
+                id: 9,
+                title: "DRIFT",
+                category: "photography",
+                year: "2024",
+                client: "Personal",
+                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=1200",
+                description: "Portraits captured in moments of contemplation.",
+                fullDescription: "DRIFT captures subjects in unguarded moments between poses. Shot on location across Tokyo, London, and São Paulo, these portraits reveal the universal humanity in stillness.",
+                credits: { photographer: "Berk Ozcan" },
+                format: "35mm Film"
+            },
+            {
+                id: 10,
+                title: "TERRAIN",
+                category: "photography",
+                year: "2024",
+                client: "National Geographic",
+                image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=1200",
+                description: "Aerial perspectives of Earth's untouched landscapes.",
+                fullDescription: "TERRAIN presents Earth from above, revealing patterns invisible from ground level. Shot via helicopter and drone across Iceland, Namibia, and the American Southwest.",
+                credits: { photographer: "Berk Ozcan" },
+                format: "Digital"
+            }
+        ];
+
+        const CLIENTS = ['Nike', 'Porsche', 'Dior', 'Beats by Dre', 'Balenciaga', 'Vogue Italia', 'National Geographic', 'Architectural Digest'];
+
+        const TIMELINE = [
+            { year: '2024', title: 'Creative Senior', place: 'Los Angeles', description: 'Leading visual direction for global campaigns' },
+            { year: '2021', title: 'Senior Cinematographer', place: 'Amsterdam', description: 'Specialized in fashion and automotive visuals' },
+            { year: '2018', title: 'Director of Photography', place: 'Berlin', description: 'Documentary and commercial work' },
+            { year: '2015', title: 'Camera Assistant', place: 'Istanbul', description: 'Foundation in classical cinematography' }
+        ];
+
+        const SOCIAL_LINKS = [
+            { name: 'Instagram', url: 'https://instagram.com', handle: '@berkozcan' },
+            { name: 'Vimeo', url: 'https://vimeo.com', handle: 'berkozcan' },
+            { name: 'LinkedIn', url: 'https://linkedin.com', handle: 'berkozcan' }
+        ];
+
+        function ProjectPage({ project, onClose, mouseEnter, mouseLeave }) {
+            console.log('ProjectPage rendered with project:', project?.title);
+            
+            React.useEffect(() => {
+                const handleEsc = (e) => {
+                    if (e.key === 'Escape') onClose();
+                };
+                window.addEventListener('keydown', handleEsc);
+                document.body.style.overflow = 'hidden';
+                
+                return () => {
+                    window.removeEventListener('keydown', handleEsc);
+                    document.body.style.overflow = 'unset';
+                };
+            }, [onClose]);
+
+            const MotionDiv = motion?.div || 'div';
+            const XIcon = X || (() => <span>×</span>);
+            const PlayIcon = Play || (() => <span>▶</span>);
+
+            return (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 200,
+                        backgroundColor: 'rgba(0,0,0,0.95)',
+                        backdropFilter: 'blur(40px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflowY: 'auto',
+                        animation: 'fadeIn 0.3s ease-out'
+                    }}
+                    onClick={onClose}
+                >
+                    <style>{`
+                        @keyframes fadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+                        @keyframes slideUp {
+                            from { opacity: 0; transform: translateY(20px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                    `}</style>
+                    
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            backgroundColor: '#0a0a0a',
+                            width: '100%',
+                            maxWidth: '1400px',
+                            margin: '32px 16px',
+                            borderRadius: '24px',
+                            overflow: 'hidden',
+                            position: 'relative',
+                            animation: 'slideUp 0.4s ease-out'
+                        }}
+                        className="text-white"
+                    >
+                        {/* Close Button */}
+                        <button
+                            onClick={onClose}
+                            onMouseEnter={mouseEnter}
+                            onMouseLeave={mouseLeave}
+                            style={{
+                                position: 'fixed',
+                                top: '32px',
+                                right: '32px',
+                                zIndex: 10,
+                                padding: '16px',
+                                backgroundColor: 'white',
+                                color: 'black',
+                                borderRadius: '50%',
+                                border: 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s',
+                                fontSize: '24px',
+                                fontWeight: 'bold',
+                                width: '56px',
+                                height: '56px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.transform = 'rotate(90deg) scale(1.1)'}
+                            onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(0) scale(1)'}
+                        >
+                            <XIcon size={24} />
+                        </button>
+
+                        {/* ESC hint */}
+                        <div style={{
+                            position: 'fixed',
+                            top: '32px',
+                            left: '32px',
+                            zIndex: 10,
+                            padding: '8px 16px',
+                            backgroundColor: 'rgba(255,255,255,0.05)',
+                            backdropFilter: 'blur(10px)',
+                            borderRadius: '50px',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            fontSize: '10px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.1em',
+                            color: '#999'
+                        }}>
+                            Press ESC to close
+                        </div>
+
+                        {/* Hero Image */}
+                        <div style={{ position: 'relative', width: '100%', height: '60vh', overflow: 'hidden' }}>
+                            <img
+                                src={project.image}
+                                alt={project.title}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    animation: 'fadeIn 0.8s ease-out'
+                                }}
+                            />
+                            {project.video && (
+                                <div style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: 'rgba(0,0,0,0.2)'
+                                }}>
+                                    <div
+                                        onMouseEnter={mouseEnter}
+                                        onMouseLeave={mouseLeave}
+                                        style={{
+                                            width: '96px',
+                                            height: '96px',
+                                            borderRadius: '50%',
+                                            backgroundColor: 'rgba(255,255,255,0.2)',
+                                            backdropFilter: 'blur(10px)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            border: '2px solid rgba(255,255,255,0.3)',
+                                            transition: 'transform 0.3s'
+                                        }}
+                                        onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                                        onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                    >
+                                        <PlayIcon size={32} style={{ color: 'white', marginLeft: '8px' }} />
+                                    </div>
+                                </div>
+                            )}
+                            {/* Gradient overlay */}
+                            <div style={{
+                                position: 'absolute',
+                                inset: 0,
+                                background: 'linear-gradient(to top, #0a0a0a, transparent, transparent)'
+                            }}></div>
+                        </div>
+
+                        {/* Content */}
+                        <div style={{ padding: '64px', color: '#e5e5e5' }} className="project-content">
+                            {/* Tags */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '32px' }}>
+                                {[project.category, project.client, project.year, project.format].filter(Boolean).map((tag, i) => (
+                                    <span key={i} style={{
+                                        padding: '8px 20px',
+                                        backgroundColor: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '50px',
+                                        fontSize: '10px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.15em',
+                                        fontWeight: 'bold',
+                                        color: '#999'
+                                    }}>
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+
+                            {/* Title */}
+                            <h1 style={{
+                                fontSize: 'clamp(3rem, 8vw, 6rem)',
+                                fontWeight: '900',
+                                textTransform: 'uppercase',
+                                letterSpacing: '-0.05em',
+                                marginBottom: '32px',
+                                lineHeight: '1'
+                            }}>
+                                {project.title}
+                            </h1>
+
+                            {/* Description */}
+                            <p style={{
+                                fontSize: 'clamp(1.25rem, 2vw, 1.5rem)',
+                                color: '#999',
+                                fontWeight: '300',
+                                lineHeight: '1.6',
+                                marginBottom: '64px',
+                                maxWidth: '900px'
+                            }}>
+                                {project.fullDescription}
+                            </p>
+
+                            {/* Case Study Sections */}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                                gap: '48px',
+                                marginBottom: '64px'
+                            }}>
+                                {/* Challenge */}
+                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '32px' }}>
+                                    <h3 style={{
+                                        fontSize: '10px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.3em',
+                                        color: '#666',
+                                        marginBottom: '16px',
+                                        fontWeight: 'bold'
+                                    }}>The Challenge</h3>
+                                    <p style={{ fontSize: '1.125rem', color: '#ccc', lineHeight: '1.6' }}>
+                                        {project.category === 'directing' 
+                                            ? `Creating a compelling narrative that captures ${project.client}'s brand essence while pushing creative boundaries. The goal was to craft a visual story that resonates emotionally and drives engagement.`
+                                            : `Capturing the essence of ${project.client === 'Personal' ? 'this vision' : project.client} through still imagery. The challenge was to create photographs that tell a complete story in a single frame, balancing composition, light, and emotion.`
+                                        }
+                                    </p>
+                                </div>
+
+                                {/* Approach */}
+                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '32px' }}>
+                                    <h3 style={{
+                                        fontSize: '10px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.3em',
+                                        color: '#666',
+                                        marginBottom: '16px',
+                                        fontWeight: 'bold'
+                                    }}>The Approach</h3>
+                                    <p style={{ fontSize: '1.125rem', color: '#ccc', lineHeight: '1.6' }}>
+                                        {project.category === 'directing'
+                                            ? 'Through meticulous pre-production planning and collaborative creative sessions, we developed a visual language that balanced artistic vision with commercial objectives.'
+                                            : 'Working with natural light and careful composition, each photograph was crafted to reveal hidden beauty and emotion. The editing process refined the visual narrative.'
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Credits */}
+                            {project.credits && (
+                                <div style={{
+                                    borderTop: '1px solid rgba(255,255,255,0.1)',
+                                    paddingTop: '48px',
+                                    marginTop: '64px'
+                                }}>
+                                    <h3 style={{
+                                        fontSize: '10px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.3em',
+                                        color: '#666',
+                                        marginBottom: '32px',
+                                        fontWeight: 'bold'
+                                    }}>Credits</h3>
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                                        gap: '32px'
+                                    }}>
+                                        {Object.entries(project.credits).map(([role, name]) => (
+                                            <div key={role}>
+                                                <p style={{
+                                                    fontSize: '10px',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.1em',
+                                                    color: '#666',
+                                                    marginBottom: '8px'
+                                                }}>{role}</p>
+                                                <p style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>{name}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CTA */}
+                            <div style={{
+                                marginTop: '64px',
+                                textAlign: 'center',
+                                borderTop: '1px solid rgba(255,255,255,0.1)',
+                                paddingTop: '48px'
+                            }}>
+                                <p style={{ color: '#666', marginBottom: '24px' }}>Interested in working together?</p>
+                                <button
+                                    onClick={() => {
+                                        onClose();
+                                        setTimeout(() => {
+                                            document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                                        }, 300);
+                                    }}
+                                    onMouseEnter={mouseEnter}
+                                    onMouseLeave={mouseLeave}
+                                    style={{
+                                        padding: '16px 40px',
+                                        backgroundColor: 'white',
+                                        color: 'black',
+                                        fontWeight: 'bold',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.15em',
+                                        borderRadius: '50px',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        fontSize: '14px'
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e5e5e5'}
+                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                                >
+                                    Get in Touch
+                                    {ArrowUpRight && <ArrowUpRight size={18} />}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [loading, setLoading] = useState(true);
+            const [selectedProject, setSelectedProject] = useState(null);
+            const [filter, setFilter] = useState("all");
+            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+            const [cursorVariant, setCursorVariant] = useState("default");
+            const [menuOpen, setMenuOpen] = useState(false);
+            const [formState, setFormState] = useState({ name: '', email: '', project: '', message: '' });
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [submitted, setSubmitted] = useState(false);
+
+            // Debug logging
+            console.log('App rendered, selectedProject:', selectedProject);
+
+            useEffect(() => {
+                const timer = setTimeout(() => setLoading(false), 2500);
+                const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+                window.addEventListener('mousemove', handleMouseMove);
+
+                // Three.js 3D Scene Setup
+                const canvas = document.getElementById('canvas-3d');
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+                
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                camera.position.z = 5;
+
+                // Create abstract geometric sculpture
+                const geometry = new THREE.IcosahedronGeometry(1.5, 1);
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.15,
+                    metalness: 0.8,
+                    roughness: 0.2
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(3, 0, 0);
+                scene.add(mesh);
+
+                // Add second layer for depth
+                const geometry2 = new THREE.OctahedronGeometry(1.2, 0);
+                const material2 = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    wireframe: false,
+                    transparent: true,
+                    opacity: 0.08,
+                    metalness: 0.9,
+                    roughness: 0.1
+                });
+                const mesh2 = new THREE.Mesh(geometry2, material2);
+                mesh2.position.set(3, 0, 0);
+                scene.add(mesh2);
+
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+                
+                const pointLight = new THREE.PointLight(0xffffff, 1);
+                pointLight.position.set(5, 5, 5);
+                scene.add(pointLight);
+
+                // Animation
+                let mouseX = 0;
+                let mouseY = 0;
+                const handleMouseMove3D = (e) => {
+                    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+                };
+                window.addEventListener('mousemove', handleMouseMove3D);
+
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    
+                    mesh.rotation.x += 0.002;
+                    mesh.rotation.y += 0.003;
+                    mesh2.rotation.x -= 0.001;
+                    mesh2.rotation.y -= 0.002;
+
+                    // Subtle mouse parallax
+                    mesh.position.x = 3 + mouseX * 0.5;
+                    mesh.position.y = mouseY * 0.3;
+                    mesh2.position.x = 3 + mouseX * 0.3;
+                    mesh2.position.y = mouseY * 0.2;
+
+                    // Pulse effect
+                    const scale = 1 + Math.sin(Date.now() * 0.001) * 0.05;
+                    mesh.scale.set(scale, scale, scale);
+                    
+                    renderer.render(scene, camera);
+                };
+                animate();
+
+                // Handle resize
+                const handleResize = () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                };
+                window.addEventListener('resize', handleResize);
+
+                // Hide 3D on scroll
+                const handleScroll = () => {
+                    const scrolled = window.scrollY;
+                    canvas.style.opacity = Math.max(0, 1 - scrolled / 800);
+                };
+                window.addEventListener('scroll', handleScroll);
+
+                return () => {
+                    clearTimeout(timer);
+                    window.removeEventListener('mousemove', handleMouseMove);
+                    window.removeEventListener('mousemove', handleMouseMove3D);
+                    window.removeEventListener('resize', handleResize);
+                    window.removeEventListener('scroll', handleScroll);
+                    renderer.dispose();
+                };
+            }, []);
+
+            const variants = {
+                default: { height: 16, width: 16, x: mousePos.x - 8, y: mousePos.y - 8, backgroundColor: "white" },
+                hover: { height: 80, width: 80, x: mousePos.x - 40, y: mousePos.y - 40, backgroundColor: "white", mixBlendMode: "difference" }
+            };
+
+            const mouseEnter = () => setCursorVariant("hover");
+            const mouseLeave = () => setCursorVariant("default");
+
+            const filteredProjects = filter === "all" 
+                ? ALL_PROJECTS 
+                : ALL_PROJECTS.filter(p => p.category === filter);
+
+            const directingProjects = ALL_PROJECTS.filter(p => p.category === "directing");
+            const photographyProjects = ALL_PROJECTS.filter(p => p.category === "photography");
+
+            const scrollToSection = (id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    setMenuOpen(false);
+                }
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
+                setTimeout(() => {
+                    setIsSubmitting(false);
+                    setSubmitted(true);
+                    setFormState({ name: '', email: '', project: '', message: '' });
+                }, 1500);
+            };
+
+            const handleChange = (e) => {
+                setFormState({ ...formState, [e.target.name]: e.target.value });
+            };
+
+            if (!motion) return <div className="text-white p-8">Loading...</div>;
+
+            if (loading) {
+                return (
+                    <div className="loading-screen">
+                        <motion.div
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center"
+                        >
+                            <motion.h1
+                                className="loading-text text-white"
+                                animate={{ opacity: [0.4, 1, 0.4] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            >
+                                BERK<br />OZCAN
+                            </motion.h1>
+                            <motion.div
+                                className="loading-line"
+                                initial={{ width: 0 }}
+                                animate={{ width: "200px" }}
+                                transition={{ duration: 1.5, delay: 0.5 }}
+                            />
+                        </motion.div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="bg-[#080808] text-[#e5e5e5] relative">
+                    {/* Film Grain */}
+                    <div className="fixed inset-0 pointer-events-none z-[99] opacity-[0.04] bg-[url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Grain.jpg')] bg-repeat"></div>
+
+                    {/* Custom Cursor */}
+                    <motion.div
+                        className="custom-cursor fixed top-0 left-0 rounded-full mix-blend-difference pointer-events-none z-[100] hidden md:flex items-center justify-center"
+                        variants={variants}
+                        animate={cursorVariant}
+                        transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.5 }}
+                    >
+                        {cursorVariant === "hover" && (
+                            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] text-black font-black uppercase tracking-tighter">View</motion.span>
+                        )}
+                    </motion.div>
+
+                    {/* Navigation */}
+                    <nav className="fixed top-0 w-full z-50 p-6 md:p-10 flex justify-between items-start pointer-events-none">
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="pointer-events-auto"
+                        >
+                            <button onClick={() => scrollToSection('home')} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} className="block">
+                                <h1 className="text-2xl font-black tracking-tighter leading-none">BERK <br/> OZCAN.</h1>
+                                <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mt-2 font-bold">Creative Senior</p>
+                            </button>
+                        </motion.div>
+
+                        <div className="flex flex-col items-end space-y-6 pointer-events-auto">
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="hidden md:flex space-x-8 text-[10px] uppercase tracking-[0.2em] font-bold"
+                            >
+                                <button onClick={() => scrollToSection('home')} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} className="text-zinc-400 hover:text-white transition-colors">Home</button>
+                                <button onClick={() => scrollToSection('works')} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} className="text-zinc-400 hover:text-white transition-colors">Works</button>
+                                <button onClick={() => scrollToSection('about')} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} className="text-zinc-400 hover:text-white transition-colors">About</button>
+                                <button onClick={() => scrollToSection('directing')} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} className="text-zinc-400 hover:text-white transition-colors">Directing</button>
+                                <button onClick={() => scrollToSection('photography')} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} className="text-zinc-400 hover:text-white transition-colors">Stills</button>
+                                <button onClick={() => scrollToSection('contact')} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} className="text-zinc-400 hover:text-white transition-colors">Contact</button>
+                            </motion.div>
+                            <motion.button
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                onClick={() => setMenuOpen(!menuOpen)}
+                                onMouseEnter={mouseEnter}
+                                onMouseLeave={mouseLeave}
+                                className="md:hidden bg-white/5 hover:bg-white text-white hover:text-black backdrop-blur-sm p-4 rounded-full transition-all duration-300 border border-white/10"
+                            >
+                                {menuOpen ? (X && <X size={20} />) : (Menu && <Menu size={20} />)}
+                            </motion.button>
+                        </div>
+                    </nav>
+
+                    {/* Mobile Menu */}
+                    <AnimatePresence>
+                        {menuOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, x: "100%" }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: "100%" }}
+                                className="md:hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center space-y-8 text-2xl font-bold uppercase"
+                            >
+                                <button onClick={() => scrollToSection('home')} className="hover:text-zinc-400 transition-colors">Home</button>
+                                <button onClick={() => scrollToSection('works')} className="hover:text-zinc-400 transition-colors">Works</button>
+                                <button onClick={() => scrollToSection('about')} className="hover:text-zinc-400 transition-colors">About</button>
+                                <button onClick={() => scrollToSection('directing')} className="hover:text-zinc-400 transition-colors">Directing</button>
+                                <button onClick={() => scrollToSection('photography')} className="hover:text-zinc-400 transition-colors">Stills</button>
+                                <button onClick={() => scrollToSection('contact')} className="hover:text-zinc-400 transition-colors">Contact</button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Hero Section */}
+                    <section id="home" className="min-h-screen flex items-center justify-center px-6 md:px-12 pt-32 pb-20">
+                        <motion.div
+                            initial="hidden"
+                            animate="visible"
+                            variants={{
+                                hidden: { opacity: 0 },
+                                visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.3 } }
+                            }}
+                            className="text-center max-w-7xl mx-auto"
+                        >
+                            <motion.div
+                                variants={{ hidden: { opacity: 0, y: 50 }, visible: { opacity: 1, y: 0 } }}
+                                className="mb-12"
+                            >
+                                <div className="w-32 h-32 md:w-48 md:h-48 rounded-full border border-white/10 mx-auto mb-12 overflow-hidden">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400" 
+                                        alt="Berk Ozcan"
+                                        className="w-full h-full object-cover grayscale"
+                                    />
+                                </div>
+                                <h2 className="text-7xl md:text-[10rem] lg:text-[14rem] font-black tracking-tighter uppercase leading-[0.85]">
+                                    Creative<br />Senior
+                                </h2>
+                            </motion.div>
+                            <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }} className="mt-12 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 max-w-[200px] leading-relaxed font-bold">
+                                    Directing motion and capturing light across continents.
+                                </p>
+                                <button
+                                    onClick={() => scrollToSection('works')}
+                                    onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+                                    className="group flex items-center gap-4 text-sm font-bold uppercase tracking-widest border-b border-white/20 pb-2 hover:border-white transition-all"
+                                >
+                                    Showreel '26 {ArrowRight && <ArrowRight size={16} className="-rotate-45 group-hover:rotate-0 transition-transform" />}
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    </section>
+
+                    {/* Selected Works Section */}
+                    <section id="works" className="px-6 md:px-12 py-32 bg-[#e5e5e5] text-black rounded-t-[50px] md:rounded-t-[100px] relative z-10">
+                        <div className="flex flex-col md:flex-row justify-between items-baseline mb-24 gap-4">
+                            <motion.h3
+                                initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}
+                                className="text-6xl md:text-9xl font-black tracking-tighter uppercase leading-none"
+                            >
+                                Selected<br />Works
+                            </motion.h3>
+                            <div className="md:text-right">
+                                <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-black mb-2">Portfolio Volume</p>
+                                <p className="text-5xl font-light tracking-tighter italic">{filteredProjects.length.toString().padStart(2, '0')}/26</p>
+                            </div>
+                        </div>
+
+                        {/* Filter Buttons */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            className="flex flex-wrap gap-4 mb-16 justify-center"
+                        >
+                            {['all', 'directing', 'photography'].map(category => (
+                                <button
+                                    key={category}
+                                    onClick={() => setFilter(category)}
+                                    onMouseEnter={mouseEnter}
+                                    onMouseLeave={mouseLeave}
+                                    className={`px-8 py-3 rounded-full text-sm font-bold uppercase tracking-widest transition-all ${
+                                        filter === category 
+                                            ? 'bg-black text-white' 
+                                            : 'bg-white/50 text-black hover:bg-black/10'
+                                    }`}
+                                >
+                                    {category}
+                                </button>
+                            ))}
+                        </motion.div>
+
+                        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24">
+                            <AnimatePresence mode="popLayout">
+                                {filteredProjects.map((project, idx) => (
+                                    <motion.div
+                                        key={project.id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        whileInView={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        viewport={{ once: true, margin: "-50px" }}
+                                        onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}
+                                        onClick={() => {
+                                            console.log('Project clicked:', project.title);
+                                            setSelectedProject(project);
+                                        }}
+                                        className={`group relative cursor-pointer ${idx % 2 !== 0 ? 'md:mt-48' : ''}`}
+                                    >
+                                        <div className="overflow-hidden rounded-2xl bg-zinc-200 aspect-[4/5] relative">
+                                            <motion.img
+                                                whileHover={{ scale: 1.05 }}
+                                                transition={{ duration: 1.2 }}
+                                                src={project.image}
+                                                alt={project.title}
+                                                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000"
+                                            />
+                                        </div>
+                                        <div className="mt-8 flex justify-between items-end border-b border-black/10 pb-6">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">{project.category} / {project.client}</p>
+                                                <h4 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">{project.title}</h4>
+                                            </div>
+                                            <span className="text-sm font-light italic text-zinc-400">{project.year}</span>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
+                    </section>
+
+                    {/* About Section */}
+                    <section id="about" className="py-48 px-6 md:px-12">
+                        <div className="max-w-7xl mx-auto">
+                            <motion.div
+                                initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }}
+                                className="text-center mb-32"
+                            >
+                                <h2 className="text-4xl md:text-7xl font-bold tracking-tighter uppercase leading-tight italic mb-20">
+                                    Berk Ozcan is a <span className="text-zinc-600">Creative Senior</span> bridging the gap between <span className="underline decoration-1 underline-offset-8">Amsterdam's design rigour</span> and <span className="underline decoration-1 underline-offset-8">LA's cinematic scale</span>.
+                                </h2>
+                            </motion.div>
+
+                            {/* Bio Section */}
+                            <div className="bg-[#e5e5e5] text-black rounded-[50px] md:rounded-[100px] p-12 md:p-20 mb-32">
+                                <motion.p
+                                    initial={{ opacity: 0, y: 50 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    className="text-3xl md:text-5xl font-bold tracking-tight leading-tight mb-20"
+                                >
+                                    Berk Ozcan is a <span className="text-zinc-500">Creative Senior</span> and visual storyteller with over a decade of experience crafting compelling narratives through <span className="italic">motion</span> and <span className="italic">still imagery</span>.
+                                </motion.p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 30 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                    >
+                                        <h3 className="text-[10px] uppercase tracking-[0.5em] text-zinc-400 mb-8 font-bold">Philosophy</h3>
+                                        <p className="text-lg text-zinc-700 leading-relaxed mb-6">
+                                            Every frame tells a story. My approach combines European design sensibility with American cinematic scale, creating visuals that resonate across cultures and mediums.
+                                        </p>
+                                        <p className="text-lg text-zinc-700 leading-relaxed">
+                                            I believe in the power of restraint—finding the essential moment within chaos, the quiet gesture that speaks volumes. Whether directing a commercial campaign or capturing a portrait, the goal remains the same: authentic human connection.
+                                        </p>
+                                    </motion.div>
+
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 30 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: 0.2 }}
+                                    >
+                                        <h3 className="text-[10px] uppercase tracking-[0.5em] text-zinc-400 mb-8 font-bold">Selected Clients</h3>
+                                        <div className="flex flex-wrap gap-3">
+                                            {CLIENTS.map((client, idx) => (
+                                                <motion.span
+                                                    key={client}
+                                                    initial={{ opacity: 0, scale: 0.9 }}
+                                                    whileInView={{ opacity: 1, scale: 1 }}
+                                                    viewport={{ once: true }}
+                                                    transition={{ delay: idx * 0.05 }}
+                                                    className="px-5 py-3 bg-black text-white text-sm font-bold uppercase tracking-wider rounded-full"
+                                                >
+                                                    {client}
+                                                </motion.span>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                </div>
+                            </div>
+
+                            {/* Timeline */}
+                            <motion.h2
+                                initial={{ opacity: 0, x: -30 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                                className="text-6xl md:text-8xl font-black tracking-tighter uppercase mb-20"
+                            >
+                                Journey
+                            </motion.h2>
+
+                            <div className="space-y-0">
+                                {TIMELINE.map((item, idx) => (
+                                    <motion.div
+                                        key={item.year}
+                                        initial={{ opacity: 0, y: 30 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: idx * 0.1 }}
+                                        className="border-t border-white/10 py-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-start"
+                                    >
+                                        <div className="md:col-span-2">
+                                            <span className="text-4xl font-black tracking-tighter text-zinc-600">{item.year}</span>
+                                        </div>
+                                        <div className="md:col-span-4">
+                                            <h4 className="text-2xl font-bold uppercase tracking-tight">{item.title}</h4>
+                                            <div className="flex items-center gap-2 text-zinc-500 mt-2">
+                                                {MapPin && <MapPin size={12} />}
+                                                <span className="text-[10px] uppercase tracking-widest font-bold">{item.place}</span>
+                                            </div>
+                                        </div>
+                                        <div className="md:col-span-6">
+                                            <p className="text-zinc-400">{item.description}</p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+
+                            {/* Contact Info Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-left border-t border-white/10 pt-16 mt-32">
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8 font-bold">Expertise</h5>
+                                    <ul className="space-y-3 text-sm font-bold uppercase tracking-widest">
+                                        <li>Creative Direction</li>
+                                        <li>Cinematography</li>
+                                        <li>Visual Strategy</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8 font-bold">Network</h5>
+                                    <ul className="space-y-3 text-sm font-bold uppercase">
+                                        {[
+                                            { name: 'Instagram', url: 'https://instagram.com' },
+                                            { name: 'Vimeo', url: 'https://vimeo.com' },
+                                            { name: 'LinkedIn', url: 'https://linkedin.com' }
+                                        ].map(link => (
+                                            <li key={link.name}>
+                                                <a
+                                                    href={link.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onMouseEnter={mouseEnter}
+                                                    onMouseLeave={mouseLeave}
+                                                    className="flex justify-between border-b border-white/5 pb-2 cursor-pointer group hover:text-white transition-colors"
+                                                >
+                                                    {link.name} {ArrowUpRight && <ArrowUpRight size={14} className="group-hover:translate-x-1 transition-transform" />}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h5 className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8 font-bold">Contact</h5>
+                                    <a
+                                        href="mailto:hello@berkozcan.com"
+                                        onMouseEnter={mouseEnter}
+                                        onMouseLeave={mouseLeave}
+                                        className="text-3xl font-black hover:text-zinc-400 transition-colors cursor-pointer tracking-tighter uppercase leading-none break-words block"
+                                    >
+                                        hello@berkozcan.com
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Directing Section */}
+                    <section id="directing" className="py-32 px-6 md:px-12 bg-[#e5e5e5] text-black rounded-t-[50px] md:rounded-t-[100px]">
+                        <motion.div
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <p className="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-6 font-bold">Motion Work</p>
+                            <h1 className="text-7xl md:text-[12rem] font-black tracking-tighter uppercase leading-[0.85] mb-8">
+                                Directing
+                            </h1>
+                            <p className="mt-8 text-xl text-zinc-700 max-w-2xl font-light mb-20">
+                                Cinematic narratives for global brands. Each project is crafted with meticulous attention to visual storytelling and emotional resonance.
+                            </p>
+                        </motion.div>
+
+                        <div className="space-y-1 border-t border-black/10">
+                            {directingProjects.map((project, idx) => (
+                                <motion.div
+                                    key={project.id}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    onClick={() => setSelectedProject(project)}
+                                    onMouseEnter={mouseEnter}
+                                    onMouseLeave={mouseLeave}
+                                    className="group cursor-pointer border-b border-black/10 py-8 md:py-12 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                                >
+                                    <div className="flex items-center gap-8">
+                                        <span className="text-zinc-600 text-sm font-mono">{(idx + 1).toString().padStart(2, '0')}</span>
+                                        <div>
+                                            <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter group-hover:text-zinc-500 transition-colors">
+                                                {project.title}
+                                            </h3>
+                                            <p className="text-zinc-600 text-sm mt-2">{project.description}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-8 md:gap-16">
+                                        <span className="text-[10px] uppercase tracking-widest text-zinc-600 font-bold">{project.client}</span>
+                                        <span className="text-zinc-500 font-light italic">{project.year}</span>
+                                        {project.video && Play && (
+                                            <div className="w-12 h-12 rounded-full border border-black/20 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all">
+                                                <Play size={16} className="ml-1" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Photography Section */}
+                    <section id="photography" className="py-32 px-6 md:px-12">
+                        <motion.div
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <p className="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-6 font-bold">Still Photography</p>
+                            <h1 className="text-7xl md:text-[12rem] font-black tracking-tighter uppercase leading-[0.85] mb-8">
+                                Stills
+                            </h1>
+                            <p className="mt-8 text-xl text-zinc-400 max-w-2xl font-light mb-20">
+                                From editorial to fine art. Each frame captures a moment of quiet intensity, exploring light, form, and human connection.
+                            </p>
+                        </motion.div>
+
+                        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+                            {photographyProjects.map((project, idx) => (
+                                <motion.div
+                                    key={project.id}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    onClick={() => setSelectedProject(project)}
+                                    onMouseEnter={mouseEnter}
+                                    onMouseLeave={mouseLeave}
+                                    className="group cursor-pointer break-inside-avoid relative overflow-hidden rounded-2xl"
+                                >
+                                    <img
+                                        src={project.image}
+                                        alt={project.title}
+                                        className="w-full grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
+                                        <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-2">{project.client} / {project.year}</p>
+                                        <h3 className="text-2xl font-black uppercase tracking-tighter">{project.title}</h3>
+                                    </div>
+                                    <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {Maximize2 && <Maximize2 size={16} />}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Contact Section */}
+                    <section id="contact" className="py-32 px-6 md:px-12 bg-[#e5e5e5] text-black rounded-t-[50px] md:rounded-t-[100px]">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start mb-20">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 50 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.8 }}
+                                >
+                                    <p className="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-6 font-bold">Get in Touch</p>
+                                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.85] mb-8">
+                                        Let's<br />Create
+                                    </h1>
+                                    <p className="text-xl text-zinc-700 mb-8">
+                                        Available for select directing and photography projects worldwide. Based in Los Angeles, working globally.
+                                    </p>
+                                    
+                                    <div className="space-y-6 border-t border-black/10 pt-8">
+                                        <div className="flex items-start gap-4">
+                                            {Mail && <Mail size={20} className="text-zinc-500 mt-1" />}
+                                            <div>
+                                                <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Email</p>
+                                                <a href="mailto:hello@berkozcan.com" className="text-xl font-bold hover:text-zinc-600 transition-colors">hello@berkozcan.com</a>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-4">
+                                            {MapPin && <MapPin size={20} className="text-zinc-500 mt-1" />}
+                                            <div>
+                                                <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Location</p>
+                                                <p className="text-xl font-bold">Los Angeles, CA</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-12 pt-8 border-t border-black/10">
+                                        <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-6">Connect</p>
+                                        <div className="flex gap-4">
+                                            {SOCIAL_LINKS.map(link => (
+                                                <a
+                                                    key={link.name}
+                                                    href={link.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onMouseEnter={mouseEnter}
+                                                    onMouseLeave={mouseLeave}
+                                                    className="px-6 py-3 bg-black text-white rounded-full text-sm font-bold uppercase tracking-wider hover:bg-zinc-800 transition-colors"
+                                                >
+                                                    {link.name}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                <motion.div
+                                    initial={{ opacity: 0, y: 50 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: 0.2, duration: 0.8 }}
+                                    className="bg-white/50 rounded-3xl p-8 md:p-12 border border-black/5"
+                                >
+                                    {submitted ? (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="h-full flex flex-col items-center justify-center text-center py-20"
+                                        >
+                                            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mb-8">
+                                                <motion.svg
+                                                    initial={{ pathLength: 0 }}
+                                                    animate={{ pathLength: 1 }}
+                                                    transition={{ duration: 0.5 }}
+                                                    className="w-10 h-10 text-green-500"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                    strokeWidth={3}
+                                                >
+                                                    <motion.path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                </motion.svg>
+                                            </div>
+                                            <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Message Sent</h3>
+                                            <p className="text-zinc-600">Thank you for reaching out. I'll get back to you soon.</p>
+                                            <button
+                                                onClick={() => setSubmitted(false)}
+                                                className="mt-8 text-sm uppercase tracking-widest text-zinc-600 hover:text-black transition-colors"
+                                            >
+                                                Send Another
+                                            </button>
+                                        </motion.div>
+                                    ) : (
+                                        <>
+                                            <h2 className="text-2xl font-black uppercase tracking-tighter mb-8">Send a Message</h2>
+                                            <form onSubmit={handleSubmit} className="space-y-6">
+                                                <div>
+                                                    <label className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 font-bold block mb-3">Name</label>
+                                                    <input
+                                                        type="text"
+                                                        name="name"
+                                                        value={formState.name}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="w-full bg-transparent border-b border-black/20 py-4 text-lg focus:outline-none focus:border-black transition-colors placeholder:text-zinc-400"
+                                                        placeholder="Your name"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 font-bold block mb-3">Email</label>
+                                                    <input
+                                                        type="email"
+                                                        name="email"
+                                                        value={formState.email}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="w-full bg-transparent border-b border-black/20 py-4 text-lg focus:outline-none focus:border-black transition-colors placeholder:text-zinc-400"
+                                                        placeholder="your@email.com"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 font-bold block mb-3">Project Type</label>
+                                                    <select
+                                                        name="project"
+                                                        value={formState.project}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="w-full bg-transparent border-b border-black/20 py-4 text-lg focus:outline-none focus:border-black transition-colors text-zinc-700 cursor-pointer"
+                                                    >
+                                                        <option value="" className="bg-white">Select project type</option>
+                                                        <option value="directing" className="bg-white">Directing / Commercial</option>
+                                                        <option value="photography" className="bg-white">Photography</option>
+                                                        <option value="creative-direction" className="bg-white">Creative Direction</option>
+                                                        <option value="collaboration" className="bg-white">Collaboration</option>
+                                                        <option value="other" className="bg-white">Other</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 font-bold block mb-3">Message</label>
+                                                    <textarea
+                                                        name="message"
+                                                        value={formState.message}
+                                                        onChange={handleChange}
+                                                        required
+                                                        rows={4}
+                                                        className="w-full bg-transparent border-b border-black/20 py-4 text-lg focus:outline-none focus:border-black transition-colors placeholder:text-zinc-400 resize-none"
+                                                        placeholder="Tell me about your project..."
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    disabled={isSubmitting}
+                                                    onMouseEnter={mouseEnter}
+                                                    onMouseLeave={mouseLeave}
+                                                    className="w-full mt-8 py-5 bg-black text-white font-bold uppercase tracking-widest rounded-full hover:bg-zinc-800 transition-colors flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {isSubmitting ? (
+                                                        <span>Sending...</span>
+                                                    ) : (
+                                                        <>
+                                                            Send Message
+                                                            {Send && <Send size={18} />}
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </form>
+                                        </>
+                                    )}
+                                </motion.div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Footer */}
+                    <footer className="p-10 flex flex-col md:flex-row justify-between items-center border-t border-white/5 text-[9px] uppercase tracking-[0.6em] text-zinc-600 font-bold">
+                        <p>&copy; 2026 BERK OZCAN STUDIO / ALL RIGHTS RESERVED</p>
+                    </footer>
+
+                    {/* Project Modal */}
+                    <AnimatePresence>
+                        {selectedProject && (
+                            <>
+                                {console.log('Rendering ProjectPage for:', selectedProject.title)}
+                                <ProjectPage
+                                    project={selectedProject}
+                                    onClose={() => setSelectedProject(null)}
+                                    mouseEnter={mouseEnter}
+                                    mouseLeave={mouseLeave}
+                                />
+                            </>
+                        )}
+                    </AnimatePresence>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
